@@ -12,62 +12,137 @@ function Body() {
   const [loading, setLoading] = useState(false);
   const [allPokemonLoaded, setAllPokemonLoaded] = useState(false);
   const [selectedPokemonId, setSelectedPokemonId] = useState(null);
+
   const [filterType, setFilterType] = useState('');
   const [showFavorites, setShowFavorites] = useState(false);
+  const [searchName, setSearchName] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [loadingFavorites, setLoadingFavorites] = useState(false);
+  const [fetchedFavorites, setFetchedFavorites] = useState([]);
+
   const [availableTypes, setAvailableTypes] = useState([]);
-  const [selectedTypes, setSelectedTypes] = useState([]);
-  const loadIncrement = 66;
+  const [initialLoad, setInitialLoad] = useState(true);
+
+  const loadIncrement = 60;
   const initialFetchDone = useRef(false);
+  const isFetching = useRef(false);
+
   const { favorites } = useFavorites();
 
-  const fetchPokemonData = useCallback(async () => {
-    if (loading || allPokemonLoaded) return;
+  const fetchAndSetPokemon = useCallback(async (newOffset = 0, isNewFilter = false) => {
+    if (isFetching.current && !isNewFilter) return;
+    if (loading && !isNewFilter) return;
+    if (allPokemonLoaded && !isNewFilter && newOffset > 0 && !filterType) return;
+
+    isFetching.current = true;
     setLoading(true);
+    setInitialLoad(false);
+
+    if (isNewFilter) {
+      setPokemonList([]);
+    }
+
     try {
       let listData;
       if (filterType) {
-        listData = await getPokemonByType(filterType, loadIncrement, offset);
+        const typeData = await getPokemonByType(filterType);
+        listData = {
+          results: typeData && typeData.results ? typeData.results : [],
+          next: null,
+        };
       } else {
-        listData = await getPokemonList(loadIncrement, offset);
+        listData = await getPokemonList(loadIncrement, newOffset);
       }
 
-      if (listData.results && listData.results.length > 0) {
-        const detailedPokemons = await Promise.all(listData.results.map(pokemon => {
-          const url = filterType ? pokemon.pokemon.url : pokemon.url;
-          return getPokemon(url.split('/').slice(-2, -1)[0]);
-        }));
+      if (listData && listData.results && listData.results.length > 0) {
+        const detailedPokemonsPromises = listData.results.map(item => {
+          const url = filterType ? item.pokemon.url : item.url;
+          if (!url) {
+            return Promise.resolve(null);
+          }
+          const idFromUrl = url.split('/').filter(Boolean).pop();
+          return getPokemon(idFromUrl);
+        });
 
-        setPokemonList((prevList) => {
-          const newUniquePokemons = detailedPokemons.filter(newPokemon =>
-            newPokemon && !prevList.some(existingPokemon => existingPokemon.id === newPokemon.id)
+        const detailedPokemons = (await Promise.all(detailedPokemonsPromises)).filter(p => p !== null);
+
+        setPokemonList(prevList => {
+          if (isNewFilter || newOffset === 0) {
+            return detailedPokemons.filter(newPokemon => newPokemon && newPokemon.id);
+          }
+          const newUniquePokemons = detailedPokemons.filter(
+            newPokemon => newPokemon && newPokemon.id && !prevList.some(existingPokemon => existingPokemon.id === newPokemon.id)
           );
           return [...prevList, ...newUniquePokemons];
         });
 
-        setOffset((prevOffset) => prevOffset + loadIncrement);
-        setAllPokemonLoaded(!listData.next);
+        if (filterType) {
+          setAllPokemonLoaded(true);
+          setOffset(listData.results.length);
+        } else {
+          if (listData.results.length > 0) {
+            setOffset(currentOffset => currentOffset + listData.results.length);
+          }
+          setAllPokemonLoaded(!listData.next);
+        }
+
       } else {
+        if (isNewFilter || newOffset === 0) setPokemonList([]);
         setAllPokemonLoaded(true);
       }
     } catch (err) {
-      console.error("Erro ao buscar lista de Pokémon:", err);
+      if (isNewFilter || newOffset === 0) setPokemonList([]);
+      setAllPokemonLoaded(true);
     } finally {
       setLoading(false);
+      isFetching.current = false;
+      if (!initialFetchDone.current && (isNewFilter || newOffset === 0)) {
+        initialFetchDone.current = true;
+      }
     }
-  }, [offset, loading, allPokemonLoaded, loadIncrement, filterType]);
+  }, [filterType, loadIncrement, loading, allPokemonLoaded]);
 
   useEffect(() => {
-    if (!initialFetchDone.current) {
-      fetchPokemonData();
-      initialFetchDone.current = true;
+    initialFetchDone.current = false;
+    setOffset(0);
+    setAllPokemonLoaded(false);
+    setInitialLoad(true);
+    if (!searchName && !filterType && !showFavorites) {
+      fetchAndSetPokemon(0, true);
+    } else if (filterType) {
+      fetchAndSetPokemon(0, true);
     }
-  }, [fetchPokemonData]);
+    setSearchResults([]);
+  }, [filterType, searchName, showFavorites]);
+
+  useEffect(() => {
+    getPokemonTypes()
+      .then(typesArray => {
+        if (typesArray && Array.isArray(typesArray)) {
+          setAvailableTypes(typesArray.map(type => type.name));
+        } else {
+          setAvailableTypes([]);
+        }
+      })
+      .catch(err => {
+        setAvailableTypes([]);
+      });
+  }, []);
 
   const handleScroll = useCallback(() => {
-    if (!loading && !allPokemonLoaded && window.innerHeight + document.documentElement.scrollTop >= document.documentElement.offsetHeight) {
-      fetchPokemonData();
+    if (
+      !filterType &&
+      !loading &&
+      !allPokemonLoaded &&
+      !isFetching.current &&
+      !searchName &&
+      !showFavorites &&
+      (window.innerHeight + document.documentElement.scrollTop >= document.documentElement.offsetHeight - 200)
+    ) {
+      fetchAndSetPokemon(offset);
     }
-  }, [loading, allPokemonLoaded, fetchPokemonData]);
+  }, [loading, allPokemonLoaded, offset, filterType, fetchAndSetPokemon, searchName, showFavorites]);
 
   useEffect(() => {
     window.addEventListener('scroll', handleScroll);
@@ -75,18 +150,6 @@ function Body() {
       window.removeEventListener('scroll', handleScroll);
     };
   }, [handleScroll]);
-
-useEffect(() => {
-  getPokemonTypes()
-    .then(typesArray => {
-      if (typesArray && Array.isArray(typesArray)) {
-        setAvailableTypes(typesArray.map(type => type.name));
-      } else {
-        console.error("Erro: A resposta de getPokemonTypes não foi um array válido:", typesArray);
-      }
-    })
-    .catch(err => console.error("Erro ao buscar tipos de Pokémon:", err));
-}, []);
 
   const handlePokemonClick = (id) => {
     setSelectedPokemonId(id);
@@ -97,35 +160,101 @@ useEffect(() => {
   };
 
   const handleFilterByType = (type) => {
-    setFilterType(type);
-    setAllPokemonLoaded(false);
-    initialFetchDone.current = false;
+    setFilterType(prevType => (prevType === type ? '' : type));
+    setShowFavorites(false);
+    setSearchName('');
   };
 
   const handleFilterFavorites = (isChecked) => {
     setShowFavorites(isChecked);
+    setFilterType('');
+    setSearchName('');
   };
 
-  const handleSearchByName = (name) => {
+  const handleSearchByName = useCallback(async (name) => {
     setSearchName(name.toLowerCase());
-  };
+    setIsSearching(true);
+    setShowFavorites(false);
+    setFilterType('');
+    setSearchResults([]);
 
-  const displayedPokemonList = useMemo(() => {
-    let currentList = pokemonList;
+    if (name) {
+      try {
+        const pokemon = await getPokemon(name.toLowerCase());
+        if (pokemon && pokemon.id) {
+          setSearchResults([pokemon]);
+        } else {
+          setSearchResults([]);
+        }
+      } catch (error) {
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    } else {
+      setIsSearching(false);
+      setSearchResults([]);
+    }
+  }, [getPokemon]);
 
+  useEffect(() => {
     if (showFavorites) {
-      currentList = currentList.filter(pokemon => favorites.includes(String(pokemon.id)));
+      setLoadingFavorites(true);
+      const fetchFavoritesDetails = async () => {
+        const details = await Promise.all(
+          favorites.map(async (favId) => {
+            const alreadyLoaded = pokemonList.find(p => String(p.id) === favId);
+            if (alreadyLoaded) {
+              return alreadyLoaded;
+            }
+            try {
+              return await getPokemon(favId);
+            } catch (error) {
+              console.error(`Erro ao buscar detalhes do favorito ${favId}:`, error);
+              return null;
+            }
+          })
+        );
+        setFetchedFavorites(details.filter(d => d !== null));
+        setLoadingFavorites(false);
+      };
+      fetchFavoritesDetails();
+    } else {
+      setFetchedFavorites([]);
+    }
+  }, [showFavorites, favorites, getPokemon, pokemonList]);
+
+  const filteredAndSearchedPokemon = useMemo(() => {
+    if (isSearching) {
+      return [];
     }
 
-    if (filterType) {
-      currentList = currentList.filter(pokemon =>
-        pokemon.types.some(typeInfo => typeInfo.type.name === filterType)
+    let listToDisplay = pokemonList;
+
+    if (searchName) {
+      listToDisplay = searchResults;
+    } else if (showFavorites) {
+      const allRelevantPokemon = [...fetchedFavorites, ...pokemonList];
+      listToDisplay = allRelevantPokemon.filter(pokemon => pokemon && favorites.includes(String(pokemon.id)));
+      listToDisplay = Array.from(new Map(listToDisplay.map(item => [item?.id, item])).values()).filter(Boolean);
+    } else if (filterType) {
+      listToDisplay = listToDisplay.filter(pokemon =>
+        pokemon && pokemon.types.some(typeInfo => typeInfo.type.name === filterType)
       );
     }
 
-    return currentList;
-  }, [pokemonList, showFavorites, filterType, favorites]);
+    return listToDisplay;
+  }, [pokemonList, showFavorites, searchName, searchResults, isSearching, favorites, filterType, fetchedFavorites]);
 
+  const pokemonToShow = useMemo(() => {
+    if (showFavorites && loadingFavorites) {
+      return [];
+    }
+    if (!initialLoad && filteredAndSearchedPokemon.length === 0 && (showFavorites || searchName || filterType)) {
+      return [];
+    }
+    return filteredAndSearchedPokemon;
+  }, [filteredAndSearchedPokemon, initialLoad, showFavorites, searchName, filterType, loadingFavorites]);
 
   return (
     <>
@@ -135,32 +264,41 @@ useEffect(() => {
         showFavorites={showFavorites}
         onSearchByName={handleSearchByName}
         availableTypes={availableTypes}
-        selectedTypes={selectedTypes}
+        currentFilterType={filterType}
+        currentSearchName={searchName}
       />
 
       <div className="grid">
-        {displayedPokemonList.map((pokemon) => (
-          <PokemonItem
-            key={pokemon.id}
-            pokemonId={String(pokemon.id)}
-            onClick={handlePokemonClick}
-          />
-        ))}
+        {pokemonToShow.map((pokemon) => {
+          if (!pokemon || !pokemon.id) {
+            return null;
+          }
+          return (
+            <PokemonItem
+              key={pokemon.id}
+              pokemonId={String(pokemon.id)}
+              onClick={() => handlePokemonClick(pokemon.id)}
+            />
+          );
+        })}
       </div>
 
-      {displayedPokemonList.length === 0 && !loading && (showFavorites || filterType) && (
-        <p>Nenhum Pokémon encontrado com os filtros aplicados.</p>
+      {loading && !searchName && !showFavorites && <p className="status-message">Carregando Pokémon...</p>}
+      {isSearching && <p className="status-message">Buscando Pokémon...</p>}
+      {loadingFavorites && <p className="status-message">Carregando Favoritos...</p>}
+      {!loading && !isSearching && !loadingFavorites && pokemonToShow.length === 0 && (showFavorites || filterType || searchName) && !initialLoad && (
+        <p className="status-message">Nenhum Pokémon encontrado com os filtros aplicados.</p>
       )}
-
+      {!loading && pokemonList.length === 0 && !filterType && !searchName && !showFavorites && allPokemonLoaded && !initialLoad && (
+        <p className="status-message">Nenhum Pokémon para mostrar.</p>
+      )}
       {selectedPokemonId && (
         <PokemonDetailsModal
           pokemonId={selectedPokemonId}
           onClose={handleCloseModal}
         />
       )}
-
     </>
   );
 }
-
 export default Body;

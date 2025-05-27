@@ -1,15 +1,80 @@
+.pokemon *,
+.pokemon *::before,
+.pokemon *::after {
+  box-sizing: border-box;
+}
+
 .pokemon {
-  border: 1px solid #ccc;
-  padding: 10px;
+  background-color: #ffffff;
+  border: 1px solid #f0f0f0;
+  border-radius: 15px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   text-align: center;
+  position: relative;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  font-family: 'Roboto', 'Arial', sans-serif;
+  width: 160px;
+  margin: 10px;
 }
 
-.favorite-button {
-  cursor: pointer;
+.pokemon:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.pokemon .favorite-button {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
   padding: 5px;
+  cursor: pointer;
   z-index: 10;
+  line-height: 0;
+}
+
+.pokemon .favorite-button svg {
+  transition: transform 0.2s ease-in-out;
+}
+
+.pokemon .favorite-button:hover svg {
+  transform: scale(1.25);
+}
+
+.pokemon img {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  margin-top: 10px;
+  margin-bottom: 15px;
+}
+
+.pokemon h2 {
+  margin: 0;
+  padding: 0;
+  text-transform: capitalize;
+}
+
+.pokemon h2:first-of-type {
+  font-size: 0.9em;
+  color: #aaa;
+  font-weight: 500;
+  margin: 5px;
+  left: 12px;
+  position: absolute;
+}
+
+.pokemon h2:first-of-type::before {
+  content: "#";
+  margin-right: 2px;
+}
+
+.pokemon h2:nth-of-type(2) {
+  font-size: 1.35em;
+  color: #333;
+  font-weight: 700;
+  margin: 20px 0 0;
 }

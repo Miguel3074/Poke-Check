@@ -19,9 +19,9 @@
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
   text-align: center;
   position: relative;
-  max-width: 90%; 
+  max-width: 90%;
   max-height: 90%;
-  overflow-y: auto; 
+  overflow-y: auto;
   color: #333;
 }
 
@@ -92,7 +92,7 @@
 .pokemon-stats li {
   background-color: #e0e0e0;
   padding: 8px 15px;
-  border-radius: 20px; 
+  border-radius: 20px;
   font-size: 0.9em;
   font-weight: 600;
   color: #555;
@@ -110,4 +110,76 @@
   .pokemon-image {
     max-width: 120px;
   }
+}
+
+.type-tag {
+  text-transform: capitalize;
+}
+
+
+.evolution-chain-section h3 {
+  margin-bottom: 15px;
+}
+
+.evolution-stages-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.evolution-stage {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.evolution-pokemon-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 8px;
+  border-radius: 8px;
+  background-color: #e8e8e8;
+  min-width: 90px;
+  transition: transform 0.2s ease;
+}
+.evolution-pokemon-card:hover {
+    transform: scale(1.05);
+}
+
+
+.evolution-sprite {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  margin-bottom: 4px;
+  image-rendering: pixelated;
+}
+
+.evolution-pokemon-name {
+  font-size: 0.85em;
+  font-weight: 600;
+  color: #444;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.evolution-arrow {
+  font-size: 2em;
+  color: #777;
+  margin: 0 5px;
+  align-self: center;
+}
+
+.error-message {
+  color: #D8000C;
+  background-color: #FFD2D2;
+  padding: 10px;
+  border-radius: 5px;
+  margin-top: 10px;
 }

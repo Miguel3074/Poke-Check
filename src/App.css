@@ -1,65 +1,135 @@
 .type-grass {
     background-color: #9bcc50 !important;
-    color: white !important;
+
+    label {
+        color: white !important;
+    }
 }
+
 .type-fire {
     background-color: #fd7d24 !important;
-    color: white !important;
+
+    label {
+        color: white !important;
+    }
 }
+
 .type-water {
     background-color: #4592c4 !important;
-    color: white !important;
+
+    label {
+        color: white !important;
+    }
 }
+
 .type-bug {
     background-color: #729f3f !important;
-    color: white !important;
+
+    label {
+        color: white !important;
+    }
 }
+
 .type-normal {
     background-color: #a4acaf !important;
-    color: white !important;
+
+    label {
+        color: white !important;
+    }
 }
+
 .type-poison {
     background-color: #b97fc9 !important;
-    color: white !important;
+
+    label {
+        color: white !important;
+    }
+}
+
+.type-dark {
+    background-color: #222222 !important;
+
+    label {
+        color: white !important;
+    }
 }
 
 .type-electric {
     background-color: #eed535 !important;
-    color: #333 !important;
+
+    label {
+        color: #333 !important;
+    }
 }
+
 .type-ground {
     background-color: #f7de3f !important;
-    color: #333 !important;
+
+    label {
+        color: #333 !important;
+    }
 }
+
 .type-fairy {
     background-color: #fdb9e9 !important;
-    color: #333 !important;
+
+    label {
+        color: #333 !important;
+    }
 }
+
 .type-fighting {
     background-color: #d56723 !important;
-    color: white !important;
+
+    label {
+        color: white !important;
+    }
 }
+
 .type-psychic {
     background-color: #f366b9 !important;
-    color: white !important;
+
+    label {
+        color: white !important;
+    }
 }
+
 .type-rock {
     background-color: #a38c21 !important;
-    color: white !important;
+
+    label {
+        color: white !important;
+    }
 }
+
 .type-steel {
     background-color: #9eb7b8 !important;
-    color: white !important;
+
+    label {
+        color: white !important;
+    }
 }
+
 .type-ice {
     background-color: #51c4e7 !important;
-    color: white !important;
+
+    label {
+        color: white !important;
+    }
 }
+
 .type-ghost {
     background-color: #7b62a3 !important;
-    color: white !important;
+
+    label {
+        color: white !important;
+    }
 }
+
 .type-dragon {
     background-color: #53a4cf !important;
-    color: white !important;
+
+    label {
+        color: white !important;
+    }
 }

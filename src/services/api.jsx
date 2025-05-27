@@ -9,7 +9,6 @@ export const getPokemon = async (id) => {
         const data = await response.json();
         return data;
     } catch (error) {
-        console.error(`Erro ao buscar Pokémon ${id}:`, error);
         throw error;
     }
 };
@@ -50,7 +49,6 @@ export const getPokemonTypes = async () => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    console.log("Resposta da API /type:", data); // <--- ADICIONE ESTE LOG
     return data.results;
   } catch (error) {
     console.error("Erro ao buscar tipos de Pokémon:", error);
