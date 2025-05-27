@@ -1,0 +1,15 @@
+.pokemon {
+  border: 1px solid #ccc;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.favorite-button {
+  cursor: pointer;
+  padding: 5px;
+  z-index: 10;
+}
